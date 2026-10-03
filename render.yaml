@@ -2,7 +2,7 @@
 # is first applied; see the README for what each one must match in the DataForge API's settings.
 services:
   - type: web
-    name: dataforge-notebooks
+    name: dataforge-jupyterhub
     runtime: docker
     region: frankfurt # next to the API
     plan: 1c-2g # every member's kernel runs in this one container
