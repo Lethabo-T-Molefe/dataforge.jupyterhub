@@ -1,0 +1,25 @@
+# Render blueprint for DataForge notebooks. Values marked `sync: false` are asked for when the blueprint
+# is first applied; see the README for what each one must match in the DataForge API's settings.
+services:
+  - type: web
+    name: dataforge-notebooks
+    runtime: docker
+    region: frankfurt # next to the API
+    plan: 1c-2g # every member's kernel runs in this one container
+    healthCheckPath: /jupyter/api
+    autoDeployTrigger: checksPass
+    disk:
+      name: notebooks
+      mountPath: /workspace # members' notebooks; without a disk they are lost on every deploy
+      sizeGB: 5
+    envVars:
+      - key: SSO_SHARED_SECRET
+        sync: false
+      - key: JUPYTER_API_TOKEN
+        sync: false
+      - key: DATAFORGE_API_URL
+        sync: false
+      - key: DATAFORGE_FRONTEND_ORIGINS
+        sync: false
+      - key: DATAFORGE_JWT_ISSUER
+        value: dataforge

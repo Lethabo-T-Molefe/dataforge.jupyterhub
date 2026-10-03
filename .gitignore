@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[oc]
+
+# Virtual environment
+.venv/
+
+# Local secrets
+.env
+
+# Local runtime data: members' notebooks and the generated JupyterLab config
+workspace/
+config/
+*.log
+
+# Tooling caches
+.ruff_cache/

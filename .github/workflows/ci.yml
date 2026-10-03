@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx ruff check .
+      - run: uvx ruff format --check .
+
+  image:
+    name: Docker image builds and starts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t dataforge-notebooks .
+      # Start it on a root-owned folder, as a mounted disk is, and wait for JupyterLab to answer.
+      - name: Starts and can write to a mounted disk
+        run: |
+          sudo mkdir -p /tmp/notebooks && sudo chown root:root /tmp/notebooks
+          docker run -d --name notebooks -p 8888:8888 -v /tmp/notebooks:/workspace \
+            -e SSO_SHARED_SECRET=ci-only-secret-ci-only-secret -e JUPYTER_API_TOKEN=ci-only-token-ci-only-token \
+            dataforge-notebooks
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:8888/jupyter/api > /dev/null; then break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:8888/jupyter/api
+          # The server creates shared/ at start: it exists and belongs to the unprivileged user.
+          test "$(docker exec notebooks stat -c %U /workspace/shared)" = jupyter
+      - if: failure()
+        run: docker logs notebooks
